@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:webtoon/screens/detail_screen.dart';
 
@@ -32,7 +31,7 @@ class Webtoon extends StatelessWidget {
               );
             },
             pageBuilder: (context, animation, secondaryAnimation) =>
-                DetailScreen(webtoonId: webtoonId, title: title, img: img),
+                DetailScreen(id: webtoonId, title: title, thumb: img),
           ),
         );
       },
