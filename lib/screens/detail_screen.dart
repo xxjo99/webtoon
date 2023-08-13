@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webtoon/models/webtoon_detail_model.dart';
 import 'package:webtoon/models/webtoon_episode_model.dart';
 import 'package:webtoon/services/api_service.dart';
@@ -20,12 +22,49 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   late Future<WebtoonDetailModel> webtoon;
   late Future<List<WebtoonEpisodeModel>> episodes;
+  late SharedPreferences prefs;
+  bool isLiked = false;
+
+  Future initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    final likedWebtoons = prefs.getStringList("likedWebtoons");
+
+    if (likedWebtoons != null) {
+      if (likedWebtoons.contains(widget.id) == true) {
+        isLiked = true;
+        setState(() {
+          isLiked = true;
+        });
+      }
+    } else {
+      await prefs.setStringList("likedWebtoons", []);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     webtoon = ApiService.getWebtoonById(widget.id);
     episodes = ApiService.getLatestEpisodeById(widget.id);
+    initPrefs();
+  }
+
+  onHeartTap() async {
+    final likedWebtoons = prefs.getStringList("likedWebtoons");
+
+    if (likedWebtoons != null) {
+      if (isLiked) {
+        likedWebtoons.remove(widget.id);
+      } else {
+        likedWebtoons.add(widget.id);
+      }
+
+      await prefs.setStringList("likedWebtoons", likedWebtoons);
+
+      setState(() {
+        isLiked = !isLiked;
+      });
+    }
   }
 
   @override
@@ -36,7 +75,14 @@ class _DetailScreenState extends State<DetailScreen> {
         elevation: 2,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: onHeartTap,
+            icon: Icon(
+                isLiked ? Icons.favorite : Icons.favorite_outline_outlined),
+            color: Colors.pink,
+          )
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -125,60 +171,65 @@ class _DetailScreenState extends State<DetailScreen> {
       itemCount: snapshot.data!.length,
       itemBuilder: (context, index) {
         var episode = snapshot.data![index];
-
-        return Row(
-          children: [
-            Container(
-              width: 80,
-              height: 55,
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(5),
+        return GestureDetector(
+          onTap: () async {
+            await launchUrlString(
+                "https://comic.naver.com/webtoon/detail?titleId=${widget.id}&no=${episode.id}");
+          },
+          child: Row(
+            children: [
+              Container(
+                width: 80,
+                height: 55,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Image.network(
+                  episode.thumb,
+                  fit: BoxFit.fill,
+                ),
               ),
-              child: Image.network(
-                episode.thumb,
-                fit: BoxFit.fill,
+              const SizedBox(
+                width: 10,
               ),
-            ),
-            const SizedBox(
-              width: 10,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  episode.title,
-                  style: Theme.of(context).textTheme.displayMedium,
-                ),
-                const SizedBox(
-                  height: 4,
-                ),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.star_rate_sharp,
-                      color: Color(0xffA7A7A7),
-                      size: 14,
-                    ),
-                    const SizedBox(
-                      width: 3,
-                    ),
-                    Text(
-                      episode.rating,
-                      style: Theme.of(context).textTheme.displaySmall,
-                    ),
-                    const SizedBox(
-                      width: 5,
-                    ),
-                    Text(
-                      episode.date,
-                      style: Theme.of(context).textTheme.displaySmall,
-                    ),
-                  ],
-                ),
-              ],
-            )
-          ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    episode.title,
+                    style: Theme.of(context).textTheme.displayMedium,
+                  ),
+                  const SizedBox(
+                    height: 4,
+                  ),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rate_sharp,
+                        color: Color(0xffA7A7A7),
+                        size: 14,
+                      ),
+                      const SizedBox(
+                        width: 3,
+                      ),
+                      Text(
+                        episode.rating,
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                      const SizedBox(
+                        width: 5,
+                      ),
+                      Text(
+                        episode.date,
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            ],
+          ),
         );
       },
       separatorBuilder: (context, index) => const Divider(),

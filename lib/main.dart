@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
               fontWeight: FontWeight.w400),
           displaySmall: TextStyle(
               color: Color(0xffA7A7A7),
-              fontSize: 12,
+              fontSize: 10,
               fontFamily: "SCDream",
               fontWeight: FontWeight.w400),
         ),

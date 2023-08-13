@@ -10,61 +10,51 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
+    final double itemHeight = (size.height - kToolbarHeight - 24) / 2;
+    final double itemWidth = size.width / 2;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: true,
-      ),
       body: SingleChildScrollView(
-        child: FutureBuilder(
-          future: webtoons,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Column(
-                children: [
-                  const SizedBox(height: 50),
-                  makeGrid(snapshot),
-                ],
+        child: Container(
+          margin: const EdgeInsets.all(10),
+          child: FutureBuilder(
+            future: webtoons,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    makeWebtoonList(snapshot, itemHeight, itemWidth),
+                  ],
+                );
+              }
+              return const Center(
+                child: CircularProgressIndicator(),
               );
-            }
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          },
+            },
+          ),
         ),
       ),
     );
   }
 
-  ListView makeList(AsyncSnapshot<List<WebtoonModel2>> snapshot) {
-
-    return ListView.separated(
-      scrollDirection: Axis.vertical,
-      itemCount: snapshot.data!.length,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-      itemBuilder: (context, index) {
-        var webtoon = snapshot.data![index];
-        return Webtoon(webtoonId: webtoon.id, title: webtoon.title, img: webtoon.thumb);
-      },
-      separatorBuilder: (context, index) => const SizedBox(
-        width: 40,
-      ),
-    );
-
-  }
-
-  GridView makeGrid(AsyncSnapshot<List<WebtoonModel2>> snapshot) {
+  GridView makeWebtoonList(AsyncSnapshot<List<WebtoonModel2>> snapshot, double itemHeight, double itemWidth) {
     return GridView.builder(
       shrinkWrap: true,
       itemCount: snapshot.data!.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 1,
+      physics: const ScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 10,
+        childAspectRatio: (itemWidth / itemHeight),
       ),
       itemBuilder: (context, index) {
         var webtoon = snapshot.data![index];
-        return Webtoon(webtoonId: webtoon.id, title: webtoon.title, img: webtoon.thumb);
+        return Webtoon(
+            webtoonId: webtoon.id, title: webtoon.title, img: webtoon.thumb);
       },
     );
   }
-
 }
